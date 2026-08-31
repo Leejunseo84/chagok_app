@@ -504,12 +504,12 @@ function renderHistory() {
     .slice(0, 25);
   $("#tx-list").innerHTML = recent.length
     ? recent.map((tx) => {
-        const who = state.characters[tx.who]?.name || tx.who;
+        const who = escapeHtml(state.characters[tx.who]?.name || tx.who || "");
         const catLabel = tx.type === "expense" ? (CATEGORIES.find((c) => c.key === tx.category)?.label || "") : "";
         const typeLabel = tx.type === "income" ? "수입" : tx.type === "saving" ? "적금" : "지출";
         const sign = tx.type === "income" ? "+" : "-";
         return `<div class="tx-item">
-          <span>${tx.date} · ${who} · ${typeLabel}${catLabel ? " " + catLabel : ""}${tx.memo ? " · " + escapeHtml(tx.memo) : ""}</span>
+          <span>${escapeHtml(tx.date || "")} · ${who} · ${typeLabel}${catLabel ? " " + catLabel : ""}${tx.memo ? " · " + escapeHtml(tx.memo) : ""}</span>
           <span class="tx-amount ${tx.type}">${sign}${formatWon(tx.amount)}</span>
         </div>`;
       }).join("")

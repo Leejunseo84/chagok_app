@@ -134,7 +134,7 @@ button, input { font-family: inherit; }
   font-size: 11px;
   box-shadow: 0 2px 8px rgba(58,51,42,.06);
 }
-.avatar-option canvas { image-rendering: pixelated; display: block; margin: 0 auto 4px; }
+.avatar-art { height: 52px; display: flex; align-items: flex-end; justify-content: center; margin: 0 auto 4px; }
 .avatar-option.selected { border-color: #caa25a; background: #f8f1e2; color: #8a6a2a; }
 
 /* -------------------- 상단바 -------------------- */
@@ -161,7 +161,7 @@ button, input { font-family: inherit; }
   border-radius: 20px;
   padding: 4px 14px 4px 6px;
 }
-.wallet-chip canvas { image-rendering: pixelated; }
+.wallet-icon { height: 22px; width: 28px; display: flex; align-items: center; }
 #wallet-amount { font-size: 15px; color: #8a6a2a; }
 .wallet-chip.pulse { animation: walletPulse 0.5s ease; }
 @keyframes walletPulse {
@@ -204,7 +204,14 @@ button, input { font-family: inherit; }
   transform: translate(-50%, -50%);
   cursor: default;
 }
-.building-slot canvas { image-rendering: pixelated; filter: drop-shadow(1.5px 2.5px 0 rgba(58,51,42,.18)); }
+.building-art { height: 44px; display: flex; align-items: flex-end; filter: drop-shadow(0 3px 2px rgba(58,51,42,.16)); }
+.vault-visual { display: flex; align-items: flex-end; gap: 6px; }
+.vault-art { height: 54px; }
+.vault-meter {
+  width: 7px; height: 54px; background: #e8ddc8; border-radius: 4px; overflow: hidden;
+  display: flex; align-items: flex-end; box-shadow: inset 0 0 0 1px rgba(58,51,42,.08);
+}
+.vault-meter-fill { width: 100%; height: 0%; background: #caa25a; border-radius: 4px; transition: height 0.6s ease; }
 .building-tag {
   margin-top: 2px;
   background: #fffaf0;
@@ -217,7 +224,7 @@ button, input { font-family: inherit; }
   box-shadow: 0 2px 6px rgba(58,51,42,.08);
 }
 .building-tag .tag-amount { color: #8a6a2a; margin-left: 4px; }
-.building-slot.bump canvas { animation: buildingBump 0.4s ease; }
+.building-slot.bump .building-art, .building-slot.bump .vault-art { animation: buildingBump 0.4s ease; }
 @keyframes buildingBump {
   0% { transform: scale(1); }
   30% { transform: scale(1.15) rotate(-2deg); }
@@ -234,8 +241,8 @@ button, input { font-family: inherit; }
   align-items: center;
   z-index: 5;
 }
-.character canvas { image-rendering: pixelated; filter: drop-shadow(1.5px 1.5px 0 rgba(58,51,42,.2)); }
-.character.walking canvas { animation: charBob 0.28s infinite steps(2); }
+.character-art { height: 46px; display: flex; align-items: flex-end; filter: drop-shadow(0 2px 2px rgba(58,51,42,.2)); }
+.character.walking .character-art { animation: charBob 0.28s infinite steps(2); }
 @keyframes charBob {
   0% { transform: translateY(0); }
   50% { transform: translateY(-4px); }

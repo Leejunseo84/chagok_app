@@ -14,8 +14,6 @@ const CATEGORIES = [
   { key: "etc", label: "기타", shape: "etc", icon: "box", color: "#7a7d84" },
 ];
 
-const PIXEL_SIZE = { building: 2.8, vault: 2.6, character: 3.1, wallet: 1.8 };
-
 const POSITIONS = {
   food: { left: 14, top: 64 },
   shopping: { left: 28, top: 26 },
@@ -75,14 +73,13 @@ function renderAvatarGrid(containerId, onPick) {
     const opt = document.createElement("div");
     opt.className = "avatar-option";
     opt.dataset.id = av.id;
-    const canvas = document.createElement("canvas");
-    canvas.width = 40;
-    canvas.height = 48;
-    opt.appendChild(canvas);
+    const art = document.createElement("div");
+    art.className = "avatar-art";
+    art.innerHTML = charSvg(av);
+    opt.appendChild(art);
     const label = document.createElement("div");
     label.textContent = av.label;
     opt.appendChild(label);
-    drawCharacter(canvas, av, 4);
     opt.addEventListener("click", () => {
       $all(`${containerId} .avatar-option`).forEach((n) => n.classList.remove("selected"));
       opt.classList.add("selected");
@@ -156,14 +153,15 @@ function buildTownIfNeeded() {
     slot.dataset.key = cat.key;
     slot.style.left = pos.left + "%";
     slot.style.top = pos.top + "%";
-    const canvas = document.createElement("canvas");
-    slot.appendChild(canvas);
+    const art = document.createElement("div");
+    art.className = "building-art";
+    art.innerHTML = categorySvg(cat.shape, cat.color);
+    slot.appendChild(art);
     const tag = document.createElement("div");
     tag.className = "building-tag";
     tag.innerHTML = `<span data-icon="${cat.icon}" data-icon-color="${cat.color}" data-icon-size="13" data-icon-stroke="2"></span>${cat.label} <span class="tag-amount" data-amount="${cat.key}">0원</span>`;
     slot.appendChild(tag);
     buildingsLayer.appendChild(slot);
-    drawCategoryShape(canvas, cat.shape, cat.color, PIXEL_SIZE.building);
   });
   applyDataIcons(buildingsLayer);
 
@@ -174,15 +172,23 @@ function buildTownIfNeeded() {
   vaultSlot.dataset.key = "vault";
   vaultSlot.style.left = vaultPos.left + "%";
   vaultSlot.style.top = vaultPos.top + "%";
-  const vaultCanvas = document.createElement("canvas");
-  vaultSlot.appendChild(vaultCanvas);
+  const vaultVisual = document.createElement("div");
+  vaultVisual.className = "vault-visual";
+  const vaultArt = document.createElement("div");
+  vaultArt.className = "building-art vault-art";
+  vaultArt.innerHTML = vaultSvg(vaultTierForAmount(0));
+  const vaultMeter = document.createElement("div");
+  vaultMeter.className = "vault-meter";
+  vaultMeter.innerHTML = '<div class="vault-meter-fill"></div>';
+  vaultVisual.appendChild(vaultArt);
+  vaultVisual.appendChild(vaultMeter);
+  vaultSlot.appendChild(vaultVisual);
   const vaultTag = document.createElement("div");
   vaultTag.className = "building-tag";
   vaultTag.innerHTML = `<span data-icon="bank" data-icon-color="#a8862c" data-icon-size="13" data-icon-stroke="2"></span>적금 <span class="tag-amount" data-amount="vault">0원</span>`;
   vaultSlot.appendChild(vaultTag);
   buildingsLayer.appendChild(vaultSlot);
   applyDataIcons(vaultSlot);
-  drawVault(vaultCanvas, PIXEL_SIZE.vault, 0, 0);
 
   // 캐릭터 2명 (나 / 상대방)
   charMeEl = createCharacterEl(state.characters.me, POSITIONS.homeLeft);
@@ -191,7 +197,7 @@ function buildTownIfNeeded() {
   $("#char-layer").appendChild(charPartnerEl);
 
   // 지갑 아이콘 최초 렌더
-  drawWallet($("#wallet-canvas"), PIXEL_SIZE.wallet, false);
+  $("#wallet-canvas").innerHTML = walletSvg(false);
 }
 
 function createCharacterEl(character, pos) {
@@ -199,13 +205,14 @@ function createCharacterEl(character, pos) {
   el.className = "character";
   el.style.left = pos.left + "%";
   el.style.top = pos.top + "%";
-  const canvas = document.createElement("canvas");
-  el.appendChild(canvas);
+  const art = document.createElement("div");
+  art.className = "character-art";
+  art.innerHTML = charSvg(getAvatar(character.avatarId));
+  el.appendChild(art);
   const nameTag = document.createElement("div");
   nameTag.className = "character-name";
   nameTag.textContent = character.name;
   el.appendChild(nameTag);
-  drawCharacter(canvas, getAvatar(character.avatarId), PIXEL_SIZE.character);
   return el;
 }
 
@@ -219,10 +226,12 @@ function renderBuildings() {
   const vaultTotal = computeVaultTotal();
   const vaultTag = document.querySelector('.tag-amount[data-amount="vault"]');
   if (vaultTag) vaultTag.textContent = formatWon(vaultTotal);
-  const vaultCanvas = document.querySelector('.building-slot[data-key="vault"] canvas');
-  if (vaultCanvas) {
+  const vaultArt = document.querySelector('.building-slot[data-key="vault"] .vault-art');
+  if (vaultArt) vaultArt.innerHTML = vaultSvg(vaultTierForAmount(vaultTotal));
+  const vaultFill = document.querySelector('.building-slot[data-key="vault"] .vault-meter-fill');
+  if (vaultFill) {
     const ratio = state.savingsGoal > 0 ? vaultTotal / state.savingsGoal : 0;
-    drawVault(vaultCanvas, PIXEL_SIZE.vault, ratio, vaultTotal);
+    vaultFill.style.height = Math.max(0, Math.min(1, ratio)) * 100 + "%";
   }
 }
 
@@ -314,8 +323,8 @@ function pulseWallet() {
   chip.classList.remove("pulse");
   void chip.offsetWidth;
   chip.classList.add("pulse");
-  drawWallet($("#wallet-canvas"), PIXEL_SIZE.wallet, true);
-  setTimeout(() => drawWallet($("#wallet-canvas"), PIXEL_SIZE.wallet, false), 500);
+  $("#wallet-canvas").innerHTML = walletSvg(true);
+  setTimeout(() => { $("#wallet-canvas").innerHTML = walletSvg(false); }, 500);
 }
 
 async function playExpenseAnimation(who, categoryKey, amount) {

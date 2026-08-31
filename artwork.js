@@ -31,43 +31,135 @@ function svgWrap(inner, natW, natH) {
   return `<svg viewBox="0 0 ${natW} ${natH}" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:100%; width:auto; display:block;">${inner}</svg>`;
 }
 
-/* ------------------- 캐릭터 (64 x 80) ------------------- */
+/* ------------------- 캐릭터: 오리지널 동물 마스코트 (64 x 80) -------------------
+   머리를 크게, 몸통/팔/다리는 머리에 딱 붙은 작은 덩어리로 그려 이음새 없는
+   몽글몽글한 실루엣을 만든다. 눈코입은 얼굴 중앙 하단에 모으고 볼터치를 크게. */
 const CHAR_NAT_W = 64, CHAR_NAT_H = 80;
+const CHAR_OW = 2.6;
+const charOutlineOf = (base) => darken(base, 0.5);
+
+const HEAD_CX = 32, HEAD_CY = 30, HEAD_R = 21;
+const BODY_CX = 32, BODY_CY = 57, BODY_RX = 16, BODY_RY = 14;
 
 const AVATARS = [
-  { id: "a1", label: "밤톨이", hair: "#5b3a24", shirt: "#d1495b", pants: "#3a3a52" },
-  { id: "a2", label: "초록이", hair: "#2f2f2f", shirt: "#4c9a63", pants: "#2b2b40" },
-  { id: "a3", label: "하늘이", hair: "#7a4a2b", shirt: "#3d8fd6", pants: "#40342a" },
-  { id: "a4", label: "노랑이", hair: "#3a2317", shirt: "#e8b93a", pants: "#3a3a52" },
-  { id: "a5", label: "보라돌이", hair: "#241b17", shirt: "#8b5fbf", pants: "#2b2b40" },
-  { id: "a6", label: "분홍이", hair: "#4a2f22", shirt: "#e58ab0", pants: "#3a3a52" },
+  { id: "cat", label: "고양이", species: "cat" },
+  { id: "bear", label: "곰", species: "bear" },
+  { id: "dog", label: "강아지", species: "dog" },
+  { id: "rabbit", label: "토끼", species: "rabbit" },
 ];
-const CHAR_SKIN = "#f0c39a";
 
-function charSvg(avatar) {
-  const { hair, shirt, pants } = avatar;
-  const skin = CHAR_SKIN;
-  const hairO = outlineOf(hair), skinO = outlineOf(skin), shirtO = outlineOf(shirt), pantsO = outlineOf(pants);
+function _animalBase(fur, arms) {
+  if (arms === undefined) arms = true;
+  const o = charOutlineOf(fur);
   const p = [];
-  p.push(`<ellipse cx="32" cy="76" rx="18" ry="3.4" fill="rgba(40,32,20,0.15)"/>`);
-  p.push(`<rect x="18" y="60" width="10" height="14" rx="5" fill="${pants}" stroke="${pantsO}" stroke-width="${OW}"/>`);
-  p.push(`<rect x="36" y="60" width="10" height="14" rx="5" fill="${pants}" stroke="${pantsO}" stroke-width="${OW}"/>`);
-  p.push(`<circle cx="12" cy="46" r="7" fill="${shirt}" stroke="${shirtO}" stroke-width="${OW}"/>`);
-  p.push(`<circle cx="52" cy="46" r="7" fill="${shirt}" stroke="${shirtO}" stroke-width="${OW}"/>`);
-  p.push(`<rect x="14" y="34" width="36" height="30" rx="15" fill="${shirt}" stroke="${shirtO}" stroke-width="${OW}"/>`);
-  p.push(`<ellipse cx="24" cy="42" rx="6" ry="9" fill="${lighten(shirt, 0.28)}" opacity="0.55"/>`);
-  p.push(`<ellipse cx="32" cy="20" rx="19" ry="16" fill="${hair}" stroke="${hairO}" stroke-width="${OW}"/>`);
-  p.push(`<circle cx="32" cy="26" r="15" fill="${skin}" stroke="${skinO}" stroke-width="${OW}"/>`);
-  p.push(`<ellipse cx="26" cy="21" rx="4.5" ry="3.2" fill="${lighten(skin, 0.35)}" opacity="0.6"/>`);
-  p.push(`<path d="M17 22 Q20 10 32 9 Q44 10 47 22 Q40 15 32 15 Q24 15 17 22 Z" fill="${hair}" stroke="${hairO}" stroke-width="${OW}" stroke-linejoin="round"/>`);
-  p.push(`<circle cx="26.5" cy="27" r="1.8" fill="#2a1d14"/>`);
-  p.push(`<circle cx="37.5" cy="27" r="1.8" fill="#2a1d14"/>`);
-  p.push(`<path d="M27 33 Q32 36 37 33" stroke="#8a5a3a" stroke-width="1.8" fill="none" stroke-linecap="round"/>`);
+  p.push(`<ellipse cx="${BODY_CX}" cy="77" rx="16" ry="2.8" fill="rgba(40,32,20,0.14)"/>`);
+  p.push(`<ellipse cx="24" cy="71" rx="6.4" ry="5.4" fill="${fur}" stroke="${o}" stroke-width="${CHAR_OW}"/>`);
+  p.push(`<ellipse cx="40" cy="71" rx="6.4" ry="5.4" fill="${fur}" stroke="${o}" stroke-width="${CHAR_OW}"/>`);
+  p.push(`<ellipse cx="${BODY_CX}" cy="${BODY_CY}" rx="${BODY_RX}" ry="${BODY_RY}" fill="${fur}" stroke="${o}" stroke-width="${CHAR_OW}"/>`);
+  if (arms) {
+    p.push(`<circle cx="17" cy="56" r="6.6" fill="${fur}" stroke="${o}" stroke-width="${CHAR_OW}"/>`);
+    p.push(`<circle cx="47" cy="56" r="6.6" fill="${fur}" stroke="${o}" stroke-width="${CHAR_OW}"/>`);
+  }
+  p.push(`<ellipse cx="${BODY_CX}" cy="55" rx="8" ry="9" fill="${lighten(fur, 0.35)}" opacity="0.55"/>`);
+  return p;
+}
+
+function _animalHead(p, fur) {
+  const o = charOutlineOf(fur);
+  p.push(`<circle cx="${HEAD_CX}" cy="${HEAD_CY}" r="${HEAD_R}" fill="${fur}" stroke="${o}" stroke-width="${CHAR_OW}"/>`);
+}
+
+function _animalBlush(p, color) {
+  const c = color || "#f7b8b0";
+  const r = 3.6;
+  p.push(`<ellipse cx="19.5" cy="34" rx="${r}" ry="${r * 0.68}" fill="${c}" opacity="0.8"/>`);
+  p.push(`<ellipse cx="44.5" cy="34" rx="${r}" ry="${r * 0.68}" fill="${c}" opacity="0.8"/>`);
+}
+
+function _animalEyes(p, cy, dx) {
+  if (cy === undefined) cy = 29;
+  if (dx === undefined) dx = 6.5;
+  p.push(`<circle cx="${HEAD_CX - dx}" cy="${cy}" r="1.9" fill="#2a1d14"/>`);
+  p.push(`<circle cx="${HEAD_CX + dx}" cy="${cy}" r="1.9" fill="#2a1d14"/>`);
+}
+
+function catSvg() {
+  const fur = "#f7efe3", innerEar = "#f3b6c0", nose = "#e8879a";
+  const o = charOutlineOf(fur);
+  const p = _animalBase(fur);
+  p.push(`<path d="M44 65 C 54 66, 60 58, 58 48 C 57 43, 52 41, 49 45 C 51 50, 49 57, 45 61 Z" fill="${fur}" stroke="${o}" stroke-width="${CHAR_OW}" stroke-linejoin="round"/>`);
+  p.push(`<path d="M15 20 L19 6 L27 18 Z" fill="${fur}" stroke="${o}" stroke-width="${CHAR_OW}" stroke-linejoin="round"/>`);
+  p.push(`<path d="M49 20 L45 6 L37 18 Z" fill="${fur}" stroke="${o}" stroke-width="${CHAR_OW}" stroke-linejoin="round"/>`);
+  p.push(`<path d="M17.5 17 L19.5 9 L23.5 16.5 Z" fill="${innerEar}"/>`);
+  p.push(`<path d="M46.5 17 L44.5 9 L40.5 16.5 Z" fill="${innerEar}"/>`);
+  _animalHead(p, fur);
+  _animalBlush(p);
+  _animalEyes(p);
+  [-2, 2].forEach((dy) => {
+    p.push(`<path d="M6 ${32 + dy} L16 ${33 + dy * 0.3}" stroke="${o}" stroke-width="1" opacity="0.45" stroke-linecap="round"/>`);
+    p.push(`<path d="M58 ${32 + dy} L48 ${33 + dy * 0.3}" stroke="${o}" stroke-width="1" opacity="0.45" stroke-linecap="round"/>`);
+  });
+  p.push(`<path d="M30.5 35 L33.5 35 L32 37 Z" fill="${nose}"/>`);
+  p.push(`<path d="M32 37 Q29.5 39.5 27 38" stroke="#8a5a3a" stroke-width="1.4" fill="none" stroke-linecap="round"/>`);
+  p.push(`<path d="M32 37 Q34.5 39.5 37 38" stroke="#8a5a3a" stroke-width="1.4" fill="none" stroke-linecap="round"/>`);
   return svgWrap(p.join(""), CHAR_NAT_W, CHAR_NAT_H);
 }
 
-function getAvatar(id) {
-  return AVATARS.find((a) => a.id === id) || AVATARS[0];
+function bearSvg() {
+  const fur = "#b98159", snout = "#f0d3ac", nose = "#5a3a24";
+  const o = charOutlineOf(fur);
+  const p = _animalBase(fur);
+  p.push(`<circle cx="15" cy="15" r="8.2" fill="${fur}" stroke="${o}" stroke-width="${CHAR_OW}"/>`);
+  p.push(`<circle cx="49" cy="15" r="8.2" fill="${fur}" stroke="${o}" stroke-width="${CHAR_OW}"/>`);
+  p.push(`<circle cx="15" cy="15" r="3.8" fill="${lighten(fur, 0.3)}"/>`);
+  p.push(`<circle cx="49" cy="15" r="3.8" fill="${lighten(fur, 0.3)}"/>`);
+  _animalHead(p, fur);
+  _animalBlush(p, "#f0a888");
+  p.push(`<ellipse cx="32" cy="35" rx="10" ry="8" fill="${snout}" stroke="${o}" stroke-width="1.8"/>`);
+  _animalEyes(p, 28, 6.5);
+  p.push(`<ellipse cx="32" cy="31.5" rx="2.8" ry="2.2" fill="${nose}"/>`);
+  p.push(`<path d="M32 33.5 L32 36.5" stroke="${nose}" stroke-width="1.4"/>`);
+  p.push(`<path d="M28.5 38 Q32 40.5 35.5 38" stroke="#7a4a2e" stroke-width="1.5" fill="none" stroke-linecap="round"/>`);
+  return svgWrap(p.join(""), CHAR_NAT_W, CHAR_NAT_H);
+}
+
+function dogSvg() {
+  const fur = "#eec27f", snout = "#fff6e6", nose = "#5a3a24";
+  const o = charOutlineOf(fur);
+  const p = _animalBase(fur);
+  p.push(`<path d="M16 18 Q6 24 9 36 Q12 41 19 37 Q16 28 16 18 Z" fill="${fur}" stroke="${o}" stroke-width="${CHAR_OW}" stroke-linejoin="round"/>`);
+  p.push(`<path d="M48 18 Q58 24 55 36 Q52 41 45 37 Q48 28 48 18 Z" fill="${fur}" stroke="${o}" stroke-width="${CHAR_OW}" stroke-linejoin="round"/>`);
+  _animalHead(p, fur);
+  _animalBlush(p);
+  p.push(`<ellipse cx="32" cy="36" rx="9" ry="7" fill="${snout}" stroke="${o}" stroke-width="1.8"/>`);
+  _animalEyes(p, 28, 6.5);
+  p.push(`<ellipse cx="32" cy="33" rx="2.6" ry="2.1" fill="${nose}"/>`);
+  p.push(`<path d="M32 35 L32 37.5" stroke="${nose}" stroke-width="1.4"/>`);
+  p.push(`<path d="M28.5 39 Q32 41.2 35.5 39" stroke="#a97030" stroke-width="1.5" fill="none" stroke-linecap="round"/>`);
+  return svgWrap(p.join(""), CHAR_NAT_W, CHAR_NAT_H);
+}
+
+function rabbitSvg() {
+  const fur = "#fdfaf5", innerEar = "#f3b6c0", nose = "#e8879a";
+  const o = charOutlineOf(fur);
+  const p = _animalBase(fur);
+  p.push(`<g transform="rotate(-8 20 20)"><rect x="14" y="-2" width="12" height="30" rx="6" fill="${fur}" stroke="${o}" stroke-width="${CHAR_OW}"/><rect x="17.2" y="3" width="5.6" height="19" rx="2.8" fill="${innerEar}"/></g>`);
+  p.push(`<g transform="rotate(8 44 20)"><rect x="38" y="-2" width="12" height="30" rx="6" fill="${fur}" stroke="${o}" stroke-width="${CHAR_OW}"/><rect x="41.2" y="3" width="5.6" height="19" rx="2.8" fill="${innerEar}"/></g>`);
+  _animalHead(p, fur);
+  _animalBlush(p);
+  _animalEyes(p);
+  p.push(`<path d="M30.5 35 L33.5 35 L32 37 Z" fill="${nose}"/>`);
+  p.push(`<path d="M32 37 L32 38.3" stroke="#8a5a3a" stroke-width="1.2"/>`);
+  p.push(`<path d="M32 38.3 Q29.5 40.5 27.5 39" stroke="#8a5a3a" stroke-width="1.4" fill="none" stroke-linecap="round"/>`);
+  p.push(`<path d="M32 38.3 Q34.5 40.5 36.5 39" stroke="#8a5a3a" stroke-width="1.4" fill="none" stroke-linecap="round"/>`);
+  return svgWrap(p.join(""), CHAR_NAT_W, CHAR_NAT_H);
+}
+
+const SPECIES_SVG = { cat: catSvg, bear: bearSvg, dog: dogSvg, rabbit: rabbitSvg };
+
+function charSvg(avatar) {
+  const fn = SPECIES_SVG[avatar.species] || catSvg;
+  return fn();
 }
 
 /* ------------------- 카테고리별 건물 ------------------- */

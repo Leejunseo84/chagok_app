@@ -398,7 +398,7 @@ button, input { font-family: inherit; }
 .tx-item {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   font-size: 12px;
   padding: 6px 0;
@@ -411,6 +411,24 @@ button, input { font-family: inherit; }
 .tx-amount.expense { color: #c9704a; }
 .tx-amount.income { color: #3f7ea3; }
 .tx-amount.saving { color: #a8862c; }
+
+.tx-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.tx-btn {
+  background: #efe6d3;
+  border: none;
+  border-radius: 6px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #3a332a;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+.tx-btn.tx-delete { color: #c9704a; }
 
 .toast {
   position: fixed;

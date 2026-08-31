@@ -66,12 +66,12 @@ function saveState() {
 let selectedAvatarMe = null;
 let selectedAvatarPartner = null;
 
-function renderAvatarGrid(containerId, onPick) {
+function renderAvatarGrid(containerId, onPick, selectedId) {
   const el = $(containerId);
   el.innerHTML = "";
   AVATARS.forEach((av) => {
     const opt = document.createElement("div");
-    opt.className = "avatar-option";
+    opt.className = "avatar-option" + (av.id === selectedId ? " selected" : "");
     opt.dataset.id = av.id;
     const art = document.createElement("div");
     art.className = "avatar-art";
@@ -120,6 +120,45 @@ function initOnboarding() {
 
 function getAvatar(avatarId) {
   return AVATARS.find((a) => a.id === avatarId) || AVATARS[0];
+}
+
+/* ------------------- 프로필 수정 (이름/캐릭터) ------------------- */
+
+let selectedAvatarSettingsMe = null;
+let selectedAvatarSettingsPartner = null;
+
+function renderProfileSettings() {
+  selectedAvatarSettingsMe = state.characters.me.avatarId;
+  selectedAvatarSettingsPartner = state.characters.partner.avatarId;
+  $("#input-name-settings-me").value = state.characters.me.name;
+  $("#input-name-settings-partner").value = state.characters.partner.name;
+  renderAvatarGrid("#avatar-grid-settings-me", (id) => (selectedAvatarSettingsMe = id), selectedAvatarSettingsMe);
+  renderAvatarGrid("#avatar-grid-settings-partner", (id) => (selectedAvatarSettingsPartner = id), selectedAvatarSettingsPartner);
+}
+
+function saveProfile(who) {
+  const nameInput = who === "me" ? $("#input-name-settings-me") : $("#input-name-settings-partner");
+  const name = nameInput.value.trim();
+  const avatarId = who === "me" ? selectedAvatarSettingsMe : selectedAvatarSettingsPartner;
+  if (!name || !avatarId) {
+    showToast("캐릭터랑 이름을 먼저 정해줘!");
+    return;
+  }
+  state.characters[who].name = name;
+  state.characters[who].avatarId = avatarId;
+  saveState();
+  updateCharacterEl(who);
+  showToast("프로필을 저장했어요!");
+}
+
+function updateCharacterEl(who) {
+  const el = who === "me" ? charMeEl : charPartnerEl;
+  if (!el) return;
+  const character = state.characters[who];
+  const art = el.querySelector(".character-art");
+  if (art) art.innerHTML = charSvg(getAvatar(character.avatarId));
+  const nameTag = el.querySelector(".character-name");
+  if (nameTag) nameTag.textContent = character.name;
 }
 
 /* ------------------- 화면 전환 ------------------- */
@@ -356,21 +395,25 @@ async function playSavingAnimation(who, amount) {
 let modalType = "expense"; // 'income' | 'expense' | 'saving'
 let selectedWho = "me";
 let selectedCategory = null;
+let editingTxId = null;
 
-function openModal(type) {
+function openModal(type, editTx) {
   $("#toast").classList.add("hidden");
   clearTimeout(toastTimer);
 
   modalType = type;
-  selectedWho = "me";
-  selectedCategory = null;
+  editingTxId = editTx ? editTx.id : null;
+  selectedWho = editTx ? editTx.who : "me";
+  selectedCategory = editTx ? (editTx.category || null) : null;
 
   const titleMap = { income: "수입 추가", expense: "지출 추가", saving: "적금 넣기" };
-  $("#modal-title").textContent = titleMap[type];
+  const editTitleMap = { income: "수입 수정", expense: "지출 수정", saving: "적금 수정" };
+  $("#modal-title").textContent = editTx ? editTitleMap[type] : titleMap[type];
   $("#category-field").classList.toggle("hidden", type !== "expense");
-  $("#input-amount").value = "";
-  $("#input-memo").value = "";
-  $("#input-date").value = todayStr();
+  $("#input-amount").value = editTx ? editTx.amount : "";
+  $("#input-memo").value = editTx ? (editTx.memo || "") : "";
+  $("#input-date").value = editTx ? editTx.date : todayStr();
+  $("#btn-confirm-add").textContent = editTx ? "수정하기!" : "넣기!";
 
   renderWhoRow();
   if (type === "expense") renderCategoryRow();
@@ -378,8 +421,15 @@ function openModal(type) {
   $("#modal-backdrop").classList.remove("hidden");
 }
 
+function openEditModal(id) {
+  const tx = state.transactions.find((t) => t.id === id);
+  if (!tx) return;
+  openModal(tx.type, tx);
+}
+
 function closeModal() {
   $("#modal-backdrop").classList.add("hidden");
+  editingTxId = null;
 }
 
 function renderWhoRow() {
@@ -426,6 +476,26 @@ async function confirmAdd() {
   }
   if (modalType === "expense" && !selectedCategory) {
     showToast("어디에 썼는지 골라줘!");
+    return;
+  }
+
+  if (editingTxId) {
+    const tx = state.transactions.find((t) => t.id === editingTxId);
+    if (tx) {
+      tx.category = modalType === "expense" ? selectedCategory : undefined;
+      tx.amount = amount;
+      tx.memo = memo;
+      tx.date = date;
+      tx.who = selectedWho;
+    }
+    editingTxId = null;
+    saveState();
+    closeModal();
+    renderWallet();
+    renderBuildings();
+    renderHistory();
+    checkGoalReached();
+    showToast("수정했어요!");
     return;
   }
 
@@ -508,12 +578,28 @@ function renderHistory() {
         const catLabel = tx.type === "expense" ? (CATEGORIES.find((c) => c.key === tx.category)?.label || "") : "";
         const typeLabel = tx.type === "income" ? "수입" : tx.type === "saving" ? "적금" : "지출";
         const sign = tx.type === "income" ? "+" : "-";
-        return `<div class="tx-item">
+        const id = escapeHtml(tx.id);
+        return `<div class="tx-item" data-id="${id}">
           <span>${escapeHtml(tx.date || "")} · ${who} · ${typeLabel}${catLabel ? " " + catLabel : ""}${tx.memo ? " · " + escapeHtml(tx.memo) : ""}</span>
           <span class="tx-amount ${tx.type}">${sign}${formatWon(tx.amount)}</span>
+          <div class="tx-actions">
+            <button class="tx-btn tx-edit" data-id="${id}" title="수정">✎</button>
+            <button class="tx-btn tx-delete" data-id="${id}" title="삭제">✕</button>
+          </div>
         </div>`;
       }).join("")
     : `<div class="hint-text">아직 기록이 없어요.</div>`;
+}
+
+function deleteTransaction(id) {
+  if (!confirm("이 기록을 삭제할까요?")) return;
+  state.transactions = state.transactions.filter((t) => t.id !== id);
+  state._goalCelebrated = false;
+  saveState();
+  renderWallet();
+  renderBuildings();
+  renderHistory();
+  showToast("삭제했어요.");
 }
 
 function escapeHtml(str) {
@@ -527,6 +613,7 @@ function escapeHtml(str) {
 function renderSettings() {
   $("#input-goal").value = state.savingsGoal || "";
   $("#import-result").textContent = "";
+  renderProfileSettings();
 }
 
 function saveGoal() {
@@ -621,11 +708,21 @@ function bindEvents() {
   });
   $("#btn-history-back").addEventListener("click", () => showTown());
 
+  $("#tx-list").addEventListener("click", (e) => {
+    const editBtn = e.target.closest(".tx-edit");
+    const delBtn = e.target.closest(".tx-delete");
+    if (editBtn) openEditModal(editBtn.dataset.id);
+    else if (delBtn) deleteTransaction(delBtn.dataset.id);
+  });
+
   $("#btn-open-settings").addEventListener("click", () => {
     renderSettings();
     showScreen("#screen-settings");
   });
   $("#btn-settings-back").addEventListener("click", () => showTown());
+
+  $("#btn-save-profile-me").addEventListener("click", () => saveProfile("me"));
+  $("#btn-save-profile-partner").addEventListener("click", () => saveProfile("partner"));
 
   $("#btn-save-goal").addEventListener("click", saveGoal);
   $("#btn-export").addEventListener("click", exportData);

@@ -7,12 +7,14 @@
 const STORAGE_KEY = "chagok_state_v1";
 
 const CATEGORIES = [
-  { key: "food", label: "식비", emoji: "🍜", wall: "#c96b4a", roof: "#7a2f2f" },
-  { key: "shopping", label: "쇼핑", emoji: "🛍️", wall: "#b06bb0", roof: "#5a2f6b" },
-  { key: "taxi", label: "택시", emoji: "🚕", wall: "#e0c04a", roof: "#7a5a1c" },
-  { key: "travel", label: "여행", emoji: "✈️", wall: "#4a90c9", roof: "#1c4a7a" },
-  { key: "etc", label: "기타", emoji: "📦", wall: "#8a8f98", roof: "#4a2f1e" },
+  { key: "food", label: "식비", shape: "food", icon: "bowl", color: "#c9704a" },
+  { key: "shopping", label: "쇼핑", shape: "shopping", icon: "bag", color: "#8a5a9a" },
+  { key: "taxi", label: "택시", shape: "taxi", icon: "car", color: "#a8862c" },
+  { key: "travel", label: "여행", shape: "travel", icon: "train", color: "#3f7ea3" },
+  { key: "etc", label: "기타", shape: "etc", icon: "box", color: "#7a7d84" },
 ];
+
+const PIXEL_SIZE = { building: 2.8, vault: 2.6, character: 3.1, wallet: 1.8 };
 
 const POSITIONS = {
   food: { left: 14, top: 64 },
@@ -155,16 +157,15 @@ function buildTownIfNeeded() {
     slot.style.left = pos.left + "%";
     slot.style.top = pos.top + "%";
     const canvas = document.createElement("canvas");
-    canvas.width = 14 * 4;
-    canvas.height = 14 * 4;
     slot.appendChild(canvas);
     const tag = document.createElement("div");
     tag.className = "building-tag";
-    tag.innerHTML = `${cat.emoji} ${cat.label} <span class="tag-amount" data-amount="${cat.key}">0원</span>`;
+    tag.innerHTML = `<span data-icon="${cat.icon}" data-icon-color="${cat.color}" data-icon-size="13" data-icon-stroke="2"></span>${cat.label} <span class="tag-amount" data-amount="${cat.key}">0원</span>`;
     slot.appendChild(tag);
     buildingsLayer.appendChild(slot);
-    drawHouse(canvas, cat.roof, cat.wall, 4);
+    drawCategoryShape(canvas, cat.shape, cat.color, PIXEL_SIZE.building);
   });
+  applyDataIcons(buildingsLayer);
 
   // 적금 금고
   const vaultPos = POSITIONS.vault;
@@ -174,14 +175,14 @@ function buildTownIfNeeded() {
   vaultSlot.style.left = vaultPos.left + "%";
   vaultSlot.style.top = vaultPos.top + "%";
   const vaultCanvas = document.createElement("canvas");
-  vaultCanvas.width = 16 * 3 + 14;
-  vaultCanvas.height = 16 * 3;
   vaultSlot.appendChild(vaultCanvas);
   const vaultTag = document.createElement("div");
   vaultTag.className = "building-tag";
-  vaultTag.innerHTML = `🏦 적금 <span class="tag-amount" data-amount="vault">0원</span>`;
+  vaultTag.innerHTML = `<span data-icon="bank" data-icon-color="#a8862c" data-icon-size="13" data-icon-stroke="2"></span>적금 <span class="tag-amount" data-amount="vault">0원</span>`;
   vaultSlot.appendChild(vaultTag);
   buildingsLayer.appendChild(vaultSlot);
+  applyDataIcons(vaultSlot);
+  drawVault(vaultCanvas, PIXEL_SIZE.vault, 0, 0);
 
   // 캐릭터 2명 (나 / 상대방)
   charMeEl = createCharacterEl(state.characters.me, POSITIONS.homeLeft);
@@ -190,7 +191,7 @@ function buildTownIfNeeded() {
   $("#char-layer").appendChild(charPartnerEl);
 
   // 지갑 아이콘 최초 렌더
-  drawWallet($("#wallet-canvas"), 2, false);
+  drawWallet($("#wallet-canvas"), PIXEL_SIZE.wallet, false);
 }
 
 function createCharacterEl(character, pos) {
@@ -199,14 +200,12 @@ function createCharacterEl(character, pos) {
   el.style.left = pos.left + "%";
   el.style.top = pos.top + "%";
   const canvas = document.createElement("canvas");
-  canvas.width = 10 * 4;
-  canvas.height = 12 * 4;
   el.appendChild(canvas);
   const nameTag = document.createElement("div");
   nameTag.className = "character-name";
   nameTag.textContent = character.name;
   el.appendChild(nameTag);
-  drawCharacter(canvas, getAvatar(character.avatarId), 4);
+  drawCharacter(canvas, getAvatar(character.avatarId), PIXEL_SIZE.character);
   return el;
 }
 
@@ -223,7 +222,7 @@ function renderBuildings() {
   const vaultCanvas = document.querySelector('.building-slot[data-key="vault"] canvas');
   if (vaultCanvas) {
     const ratio = state.savingsGoal > 0 ? vaultTotal / state.savingsGoal : 0;
-    drawVault(vaultCanvas, 3, ratio);
+    drawVault(vaultCanvas, PIXEL_SIZE.vault, ratio, vaultTotal);
   }
 }
 
@@ -315,8 +314,8 @@ function pulseWallet() {
   chip.classList.remove("pulse");
   void chip.offsetWidth;
   chip.classList.add("pulse");
-  drawWallet($("#wallet-canvas"), 2, true);
-  setTimeout(() => drawWallet($("#wallet-canvas"), 2, false), 500);
+  drawWallet($("#wallet-canvas"), PIXEL_SIZE.wallet, true);
+  setTimeout(() => drawWallet($("#wallet-canvas"), PIXEL_SIZE.wallet, false), 500);
 }
 
 async function playExpenseAnimation(who, categoryKey, amount) {
@@ -396,13 +395,15 @@ function renderCategoryRow() {
   CATEGORIES.forEach((cat) => {
     const chip = document.createElement("div");
     chip.className = "chip-btn" + (cat.key === selectedCategory ? " selected" : "");
-    chip.textContent = `${cat.emoji} ${cat.label}`;
+    const color = cat.key === selectedCategory ? "#8a6a2a" : cat.color;
+    chip.innerHTML = `<span data-icon="${cat.icon}" data-icon-color="${color}" data-icon-size="14" data-icon-stroke="2"></span>${cat.label}`;
     chip.addEventListener("click", () => {
       selectedCategory = cat.key;
       renderCategoryRow();
     });
     row.appendChild(chip);
   });
+  applyDataIcons(row);
 }
 
 async function confirmAdd() {
@@ -475,10 +476,11 @@ function renderHistory() {
     const pct = Math.round((amt / maxCat) * 100);
     return `
       <div class="bar-row">
-        <div class="bar-row-top"><span>${c.emoji} ${c.label}</span><span>${formatWon(amt)}</span></div>
-        <div class="bar-track"><div class="bar-fill" style="width:${pct}%; background:${c.wall}"></div></div>
+        <div class="bar-row-top"><span><span data-icon="${c.icon}" data-icon-color="${c.color}" data-icon-size="14" data-icon-stroke="2"></span>${c.label}</span><span>${formatWon(amt)}</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%; background:${c.color}"></div></div>
       </div>`;
   }).join("");
+  applyDataIcons($("#category-bars"));
 
   const vaultTotal = computeVaultTotal();
   const goal = state.savingsGoal || 0;
@@ -628,6 +630,7 @@ function bindEvents() {
 /* ------------------- 초기화 ------------------- */
 
 function init() {
+  applyDataIcons(document);
   bindEvents();
   if (state.onboarded && state.characters.me && state.characters.partner) {
     showTown();

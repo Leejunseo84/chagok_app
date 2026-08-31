@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 <title>차곡 - 우리 둘의 가계부</title>
-<meta name="theme-color" content="#7a4a2b" />
+<meta name="theme-color" content="#caa25a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="차곡" />
@@ -31,7 +31,7 @@
       <p class="onb-label">상대방 캐릭터도 골라줘</p>
       <div class="avatar-grid" id="avatar-grid-partner"></div>
       <input type="text" id="input-name-partner" class="pixel-input" placeholder="이름 (예: 여자친구)" maxlength="6" />
-      <button class="pixel-btn" id="btn-onb-start">시작하기 🏡</button>
+      <button class="pixel-btn" id="btn-onb-start">시작하기 <span data-icon="bank" data-icon-color="#fff8ec" data-icon-size="15" style="vertical-align:-3px; display:inline-block;"></span></button>
     </div>
   </div>
 </section>
@@ -40,12 +40,12 @@
 <section id="screen-town" class="screen hidden">
 
   <header class="topbar">
-    <button class="icon-btn" id="btn-open-history" title="통계">📊</button>
+    <button class="icon-btn" id="btn-open-history" title="통계"><span data-icon="chart" data-icon-color="#3a332a" data-icon-size="18"></span></button>
     <div class="wallet-chip" id="wallet-chip">
       <canvas id="wallet-canvas" width="28" height="28"></canvas>
       <span id="wallet-amount">0원</span>
     </div>
-    <button class="icon-btn" id="btn-open-settings" title="설정">⚙️</button>
+    <button class="icon-btn" id="btn-open-settings" title="설정"><span data-icon="sliders" data-icon-color="#3a332a" data-icon-size="18"></span></button>
   </header>
 
   <div class="town-stage" id="town-stage">
@@ -57,13 +57,13 @@
 
   <footer class="action-bar">
     <button class="action-btn income" data-action="income">
-      <span class="action-icon">💰</span><span>수입</span>
+      <span class="action-icon" data-icon="wallet" data-icon-color="#3f7ea3" data-icon-size="20"></span><span>수입</span>
     </button>
     <button class="action-btn expense" data-action="expense">
-      <span class="action-icon">🧾</span><span>지출</span>
+      <span class="action-icon" data-icon="receipt" data-icon-color="#c9704a" data-icon-size="20"></span><span>지출</span>
     </button>
     <button class="action-btn saving" data-action="saving">
-      <span class="action-icon">🏦</span><span>적금</span>
+      <span class="action-icon" data-icon="bank" data-icon-color="#a8862c" data-icon-size="20"></span><span>적금</span>
     </button>
   </footer>
 </section>
@@ -73,7 +73,7 @@
   <div class="modal-sheet" id="modal-sheet">
     <div class="modal-head">
       <span id="modal-title">지출 추가</span>
-      <button class="icon-btn" id="btn-modal-close">✕</button>
+      <button class="icon-btn" id="btn-modal-close" style="font-size:16px;">✕</button>
     </div>
 
     <div class="modal-body">
@@ -102,7 +102,7 @@
 <!-- ============ 통계/히스토리 화면 ============ -->
 <section id="screen-history" class="screen hidden">
   <header class="subbar">
-    <button class="icon-btn" id="btn-history-back">←</button>
+    <button class="icon-btn" id="btn-history-back" style="font-size:18px;">←</button>
     <span class="subbar-title">이번 달 기록</span>
     <span class="subbar-spacer"></span>
   </header>
@@ -127,7 +127,7 @@
 <!-- ============ 설정 화면 ============ -->
 <section id="screen-settings" class="screen hidden">
   <header class="subbar">
-    <button class="icon-btn" id="btn-settings-back">←</button>
+    <button class="icon-btn" id="btn-settings-back" style="font-size:18px;">←</button>
     <span class="subbar-title">설정</span>
     <span class="subbar-spacer"></span>
   </header>
@@ -142,8 +142,8 @@
     <div class="stat-card">
       <div class="stat-card-title">데이터 공유 (수동)</div>
       <p class="hint-text">둘이 각자 폰에 이 앱을 쓰다가, 아래 "내보내기"로 파일을 만들어 카톡 등으로 보내주면 상대방이 "불러오기"로 합칠 수 있어요. 이미 있는 기록은 중복으로 추가되지 않아요.</p>
-      <button class="pixel-btn" id="btn-export">📤 내보내기 (파일 저장)</button>
-      <label class="pixel-btn" id="btn-import-label" for="input-import">📥 불러오기 (파일 선택)</label>
+      <button class="pixel-btn" id="btn-export"><span data-icon="download" data-icon-color="#fff8ec" data-icon-size="15" style="vertical-align:-3px; display:inline-block; margin-right:4px;"></span>내보내기 (파일 저장)</button>
+      <label class="pixel-btn" id="btn-import-label" for="input-import"><span data-icon="upload" data-icon-color="#fff8ec" data-icon-size="15" style="vertical-align:-3px; display:inline-block; margin-right:4px;"></span>불러오기 (파일 선택)</label>
       <input type="file" id="input-import" accept="application/json" class="hidden" />
       <div id="import-result" class="hint-text"></div>
     </div>
@@ -157,6 +157,7 @@
 
 <div id="toast" class="toast hidden"></div>
 
+<script src="icons.js"></script>
 <script src="pixelart.js"></script>
 <script src="app.js"></script>
 </body>

@@ -3,11 +3,12 @@
    캐시에서 그대로 불러온다. 데이터(가계부 기록)는 캐시가 아니라
    localStorage에 저장되므로 앱 업데이트와 무관하게 안전하다. */
 
-const CACHE_NAME = "chagok-cache-v1";
+const CACHE_NAME = "chagok-cache-v2";
 const ASSETS = [
   "./",
   "./index.html",
   "./style.css",
+  "./icons.js",
   "./pixelart.js",
   "./app.js",
   "./manifest.json",
